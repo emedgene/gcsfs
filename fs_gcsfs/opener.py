@@ -3,12 +3,27 @@
 
 __all__ = ['GCSFSOpener']
 
+import base64
+import json
+
 from google.cloud.storage import Client
 from fs.opener import Opener
 from fs.opener.errors import OpenerError
 from fs.path import iteratepath, join
+from google.oauth2.service_account import Credentials
 
 from ._gcsfs import GCSFS
+
+
+def base64_to_dict(encoded_string):
+    """Decodes a base64 string to a dictionary."""
+    # Decode base64 string to bytes
+    decoded_bytes = base64.b64decode(encoded_string)
+    # Convert bytes to JSON string
+    json_string = decoded_bytes.decode('utf-8')
+    # Convert JSON string to dictionary
+    decoded_dict = json.loads(json_string)
+    return decoded_dict
 
 
 class GCSFSOpener(Opener):
@@ -28,7 +43,12 @@ class GCSFSOpener(Opener):
         else:
             strict = True
 
-        client = Client()
+        service_account_info = base64_to_dict(parse_result.username)
+
+        client_credentials = Credentials.from_service_account_info(service_account_info)
+
+        client = Client(credentials=client_credentials)
+
         project = parse_result.params.get("project")
         if project:
             client.project = project
