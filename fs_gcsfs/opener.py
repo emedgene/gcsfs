@@ -43,7 +43,11 @@ class GCSFSOpener(Opener):
         else:
             strict = True
 
+        if not parse_result.username:
+            raise OpenerError("Invalid username")
+
         service_account_info = base64_to_dict(parse_result.username)
+
 
         client_credentials = Credentials.from_service_account_info(service_account_info)
 
